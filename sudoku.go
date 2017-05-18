@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sudoku/game"
+	"github.com/jkeene-NAN/sudoku/game"
 	"log"
 )
 

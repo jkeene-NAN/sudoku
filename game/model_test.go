@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"fmt"
+	"bytes"
 )
 
 
@@ -273,6 +275,7 @@ func Test_validateSubGrid(t *testing.T) {
 	err = validateSubGrid(gameState, 0)
 	assert.Nil(t, err)
 
+
 	gameState.Grid[0][0] = 0
 	gameState.Grid[0][1] = 1
 	gameState.Grid[0][2] = 2
@@ -282,8 +285,96 @@ func Test_validateSubGrid(t *testing.T) {
 	gameState.Grid[2][0] = 6
 	gameState.Grid[2][1] = 7
 	gameState.Grid[2][2] = 8
-	err = validateSubGrid(gameState, 0)
-	assert.Nil(t, err)
+	/*----------------------*/
+	gameState.Grid[3][0] = 0
+	gameState.Grid[3][1] = 1
+	gameState.Grid[3][2] = 2
+	gameState.Grid[4][0] = 3
+	gameState.Grid[4][1] = 4
+	gameState.Grid[4][2] = 5
+	gameState.Grid[5][0] = 6
+	gameState.Grid[5][1] = 7
+	gameState.Grid[5][2] = 8
+	/*----------------------*/
+	gameState.Grid[6][0] = 0
+	gameState.Grid[6][1] = 1
+	gameState.Grid[6][2] = 2
+	gameState.Grid[7][0] = 3
+	gameState.Grid[7][1] = 4
+	gameState.Grid[7][2] = 5
+	gameState.Grid[8][0] = 6
+	gameState.Grid[8][1] = 7
+	gameState.Grid[8][2] = 8
+	/*----------------------*/
+	gameState.Grid[0][3] = 0
+	gameState.Grid[0][4] = 1
+	gameState.Grid[0][5] = 2
+	gameState.Grid[1][3] = 3
+	gameState.Grid[1][4] = 4
+	gameState.Grid[1][5] = 5
+	gameState.Grid[2][3] = 6
+	gameState.Grid[2][4] = 7
+	gameState.Grid[2][5] = 8
+	/*----------------------*/
+	gameState.Grid[3][3] = 0
+	gameState.Grid[3][4] = 1
+	gameState.Grid[3][5] = 2
+	gameState.Grid[4][3] = 3
+	gameState.Grid[4][4] = 4
+	gameState.Grid[4][5] = 5
+	gameState.Grid[5][3] = 6
+	gameState.Grid[5][4] = 7
+	gameState.Grid[5][5] = 8
+	/*----------------------*/
+	gameState.Grid[6][3] = 0
+	gameState.Grid[6][4] = 1
+	gameState.Grid[6][5] = 2
+	gameState.Grid[7][3] = 3
+	gameState.Grid[7][4] = 4
+	gameState.Grid[7][5] = 5
+	gameState.Grid[8][3] = 6
+	gameState.Grid[8][4] = 7
+	gameState.Grid[8][5] = 8
+	/*----------------------*/
+	gameState.Grid[0][6] = 0
+	gameState.Grid[0][7] = 1
+	gameState.Grid[0][8] = 2
+	gameState.Grid[1][6] = 3
+	gameState.Grid[1][7] = 4
+	gameState.Grid[1][8] = 5
+	gameState.Grid[2][6] = 6
+	gameState.Grid[2][7] = 7
+	gameState.Grid[2][8] = 8
+	/*----------------------*/
+	gameState.Grid[3][6] = 0
+	gameState.Grid[3][7] = 1
+	gameState.Grid[3][8] = 2
+	gameState.Grid[4][6] = 3
+	gameState.Grid[4][7] = 4
+	gameState.Grid[4][8] = 5
+	gameState.Grid[5][6] = 6
+	gameState.Grid[5][7] = 7
+	gameState.Grid[5][8] = 8
+	/*----------------------*/
+	gameState.Grid[6][6] = 0
+	gameState.Grid[6][7] = 1
+	gameState.Grid[6][8] = 2
+	gameState.Grid[7][6] = 3
+	gameState.Grid[7][7] = 4
+	gameState.Grid[7][8] = 5
+	gameState.Grid[8][6] = 6
+	gameState.Grid[8][7] = 7
+	gameState.Grid[8][8] = 8
+	/*----------------------*/
+	for i := 0; i < numSubSquares; i++ {
+		err = validateSubGrid(gameState, i)
+		assert.Nil(t, err)
+	}
+
+	err = validateGameState(gameState)
+	assert.NotNil(t, err)
+
+	printGameState(gameState)
 }
 
 func Test_testValidateGameState(t *testing.T) {
@@ -509,4 +600,249 @@ func Test_minMax(t *testing.T) {
 }
 
 
+func printCandidateList(candidates candidateList, header, indent string) {
+	/*
+	The candidate list is intended to be very small in this helper function
+	 */
 
+	var buf bytes.Buffer
+	fmt.Println(header)
+	for i, candidate := range candidates {
+		buf.WriteString(fmt.Sprintf("%s%d: %v\n", indent, i, *candidate))
+	}
+
+	fmt.Println(buf.String())
+}
+
+func printTree(tree searchTree, header, indent string) {
+
+	fmt.Println(header)
+	for i, candidates := range tree {
+		printCandidateList(candidates, fmt.Sprintf("%stree node: %d", indent, i), indent + "\t")
+	}
+}
+
+func Test_backTrack(t *testing.T) {
+	var err error
+	var gs *gameState
+	var moves candidateList
+	var tree searchTree
+
+
+	gs, err = createGame(NewGame())
+
+	moves = candidateList{
+		&candidate{
+			row: 0,
+			column: 0,
+			value: 0,
+		},
+		&candidate{
+			row: 0,
+			column: 2,
+			value:2,
+		},
+		&candidate{
+			row: 0,
+			column: 1,
+			value: 1,
+		},
+	}
+
+	for _, move := range moves {
+		gs.addCandidate(move)
+	}
+
+	err = validateGameState(gs)
+	assert.Nil(t, err)
+
+	tree = make(searchTree, 3)
+
+	tree[0] = candidateList{
+		&candidate{3, 3, 0},
+		&candidate{3, 4, 1},
+		&candidate{3, 5, 2},
+	}
+	tree[1] = candidateList{
+		&candidate{6, 6, 0},
+		&candidate{6, 7, 1},
+		&candidate{6, 8, 2},
+	}
+	tree[2] = candidateList{
+		&candidate{0, 8, 8},
+	}
+
+	var c *candidate = tree.back().back()
+	assert.NotNil(t, c)
+
+	fmt.Println("first back track...")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "search tree", "\t")
+	gs, moves, tree, err = backTrack(gs, moves, tree)
+	assert.Nil(t, err)
+	assert.Equal(t, len(moves), len(tree))
+	assert.True(t, moves.back().equals(c))
+	assert.Nil(t, validateGameState(gs))
+
+	fmt.Println("second back track...")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "search tree", "\t")
+	c = tree.popBack().back().back()
+	gs, moves, tree, err = backTrack(gs, moves, tree)
+	assert.Nil(t, err)
+	assert.Equal(t, len(moves), len(tree))
+	assert.True(t, moves.back().equals(c))
+	assert.Nil(t, validateGameState(gs))
+	assert.Equal(t, 2, len(tree.back()))
+
+	fmt.Println("third back track...")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "search tree", "\t")
+	c = tree.back().back()
+	gs, moves, tree, err = backTrack(gs, moves, tree)
+	assert.Nil(t, err)
+	assert.Equal(t, len(moves), len(tree))
+	assert.True(t, moves.back().equals(c))
+	assert.Nil(t, validateGameState(gs))
+	assert.Equal(t, 1, len(tree.back()))
+
+	fmt.Println("fourth back track...")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "search tree", "\t")
+	c = tree.back().back()
+	gs, moves, tree, err = backTrack(gs, moves, tree)
+	assert.Nil(t, err)
+	assert.Equal(t, len(moves), len(tree))
+	assert.True(t, moves.back().equals(c))
+	assert.Nil(t, validateGameState(gs))
+	assert.Equal(t, 0, len(tree.back()))
+
+	fmt.Println("fifth back track...")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "search tree", "\t")
+	c = tree.popBack().back().back()
+	gs, moves, tree, err = backTrack(gs, moves, tree)
+	assert.Nil(t, err)
+	assert.Equal(t, len(moves), len(tree))
+	assert.True(t, moves.back().equals(c))
+	assert.Nil(t, validateGameState(gs))
+	assert.Equal(t, 2, len(tree.back()))
+
+	fmt.Println("sixth back track...")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "search tree", "\t")
+	c = tree.back().back()
+	gs, moves, tree, err = backTrack(gs, moves, tree)
+	assert.Nil(t, err)
+	assert.Equal(t, len(moves), len(tree))
+	assert.True(t, moves.back().equals(c))
+	assert.Nil(t, validateGameState(gs))
+	assert.Equal(t, 1, len(tree.back()))
+
+	fmt.Println("seventh back track...")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "search tree", "\t")
+	c = tree.back().back()
+	gs, moves, tree, err = backTrack(gs, moves, tree)
+	assert.Nil(t, err)
+	assert.Equal(t, len(moves), len(tree))
+	assert.True(t, moves.back().equals(c))
+	assert.Nil(t, validateGameState(gs))
+	assert.Equal(t, 0, len(tree.back()))
+
+	fmt.Println("eigth back track...")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "search tree", "\t")
+	gs, moves, tree, err = backTrack(gs, moves, tree)
+	assert.NotNil(t, err)
+	assert.Equal(t, 0, len(moves))
+	assert.Equal(t, 0, len(tree))
+
+
+}
+
+func Test_backTrack2(t *testing.T) {
+	/*
+	Same setup as Test_backTrack
+	 */
+	var err error
+	var gs *gameState
+	var moves candidateList
+	var tree searchTree
+
+
+	gs, err = createGame(NewGame())
+
+	moves = candidateList{
+		&candidate{
+			row: 0,
+			column: 0,
+			value: 0,
+		},
+		&candidate{
+			row: 0,
+			column: 2,
+			value:2,
+		},
+		&candidate{
+			row: 0,
+			column: 1,
+			value: 1,
+		},
+		&candidate{
+			row: 0,
+			column: 3,
+			value: 4,
+		},
+	}
+
+	for _, move := range moves {
+		gs.addCandidate(move)
+	}
+
+	err = validateGameState(gs)
+	assert.Nil(t, err)
+
+	tree = make(searchTree, 4)
+	/*
+	Here is where this test differs from Test_backTrack. I want to force a recursive backtrack
+	 */
+	tree[0] = candidateList{
+		&candidate{3, 3, 0},
+		&candidate{3, 4, 1},
+		&candidate{3, 5, 2},
+	}
+	tree[1] = candidateList{
+
+	}
+	tree[2] = candidateList{
+
+	}
+	tree[3] = candidateList{
+
+	}
+
+	fmt.Println("before backtrack")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "tree", "\t")
+	var c *candidate = tree[0].back()
+	gs, moves, tree, err = backTrack(gs, moves, tree)
+	assert.Nil(t, err)
+	assert.Equal(t, len(moves), len(tree))
+	assert.True(t, moves.back().equals(c))
+	assert.Nil(t, validateGameState(gs))
+	fmt.Println("after backtrack")
+	printCandidateList(moves, "moves", "\t")
+	printTree(tree, "tree", "\t")
+
+	var candidates candidateList = createValidCandidateList(gs, createAllCandidatesList())
+	c = candidates.back()
+	gs.addCandidate(c)
+	moves = append(moves, c)
+	candidates = candidates.popBack()
+	tree = append(tree, candidates)
+	printCandidateList(moves, "moves", "\t")
+	//fmt.Printf("gs: %v\n", *gs)
+	//printTree(tree, "tree", "\t")
+
+}

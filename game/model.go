@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"log"
+	"os"
+	"bytes"
 )
 
 const numCandidates int = 9
@@ -16,6 +19,8 @@ const DefaultMaxIterations = 1000000000
 
 func init() {
 	rand.Seed(time.Now().Unix())
+
+	log.SetOutput(os.Stdout)
 }
 
 type candidate struct {
@@ -34,6 +39,10 @@ func (c candidate) clone() (*candidate) {
 	}
 
 	return ret
+}
+
+func (c *candidate) equals(other *candidate) bool {
+	return c.row == other.row && c.column == other.column && c.value == other.value
 }
 
 /*
@@ -500,6 +509,93 @@ func shuffleCandidates(candidates candidateList) {
 	}
 }
 
+type searchSnapShot struct {
+	candidateCountHistogram []int
+	moves candidateList
+}
+
+func createSearchSnapShot(gs *gameState, moves candidateList, tree searchTree) *searchSnapShot {
+	var snapShot *searchSnapShot = &searchSnapShot{
+		candidateCountHistogram: make([]int, len(tree)),
+		moves: make(candidateList, len(moves)),
+	}
+
+	for i := 0; i < len(moves); i++ {
+		snapShot.moves[i] = moves[i]
+	}
+
+	for i := 0; i < len(tree); i++ {
+		snapShot.candidateCountHistogram[i] = len(tree[i])
+	}
+
+	return snapShot
+}
+
+func backTrack(gs *gameState, moves candidateList, tree searchTree) (*gameState, candidateList, searchTree, error) {
+	if len(tree) == 0 {
+		return nil, nil, nil, errors.New("tree is empty on call to back track")
+	}
+
+	log.Print("backtracking...")
+	var c *candidate = moves.back()
+	moves = moves.popBack()
+	gs.removeCandidate(c)
+
+	var candidates candidateList = tree.back()
+	tree = tree.popBack()
+	if len(candidates) == 0 {
+		return backTrack(gs, moves, tree)
+	} else {
+		c = candidates.back()
+		candidates = candidates.popBack()
+		tree = append(tree, candidates)
+		gs.addCandidate(c)
+		moves = append(moves, c)
+		return gs, moves, tree, nil
+	}
+
+}
+
+func printGameState(gs *gameState) {
+	var buf bytes.Buffer
+	buf.WriteString("\n")
+	for row := 0; row < numRows; row++ {
+		for column := 0; column < numColumns; column++ {
+			var value int = gs.Grid[row][column]
+			if value == NotSet {
+				buf.WriteString("-")
+			} else {
+				buf.WriteString(fmt.Sprintf("%d", value))
+			}
+
+			if column != numColumns - 1 {
+				buf.WriteString("|")
+			}
+		}
+		buf.WriteString("\n")
+	}
+
+	log.Print(buf.String())
+}
+
+func printTreeHistograms(tree searchTree, after int) {
+	var treeLen int = len(tree)
+	if treeLen < after {
+		return
+	} else {
+		var buf bytes.Buffer
+		for i := after; i < treeLen; i++ {
+			var candidates candidateList = tree[i]
+			var candidatesLen = len(candidates)
+			buf.WriteString(fmt.Sprintf("%d:%d, ", i, candidatesLen))
+		}
+
+		log.Print(buf.String())
+	}
+
+
+
+}
 
 func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 	var gs *gameState
@@ -515,22 +611,34 @@ func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 	var moves candidateList = make(candidateList, 0, 81)
 	var playing bool = !isFinished(gs)
 	var iteration int = 0
+	var snapShotModulo int = 1000
+
 	for playing && (iteration < maxIterations){
 		iteration++
-
+		if (iteration % snapShotModulo) == 0 {
+			log.Printf("iteration: %d", iteration)
+		}
 		var candidates candidateList = createValidCandidateList(gs, allCandidates)
 		shuffleCandidates(candidates)
 		if len(candidates) == 0 {
-			//TODO
-			playing = false
+			gs, moves, tree, err = backTrack(gs, moves, tree)
+			if err != nil {
+				return nil, iteration, err
+			} else {
+				//printTreeHistograms(tree, 60)
+			}
 		} else {
 			var candidate *candidate = candidates.back()
 			candidates = candidates.popBack()
 			tree = append(tree, candidates)
 			moves = append(moves, candidate)
 			gs.addCandidate(candidate)
-			gs.Grid[candidate.row][candidate.column] = candidate.value
+			/*
+			log.Printf("game state set count: %d, len(moves): %d, len(tree): %d, len(tree.back()): %d",
+				gs.setCount(), len(moves), len(tree), len(tree.back()))
+				*/
 			//log.Printf("gs.setCount(): %d", gs.setCount())
+			printTreeHistograms(tree, 60)
 			playing = !isFinished(gs)
 		}
 	}
