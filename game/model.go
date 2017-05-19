@@ -1,14 +1,14 @@
 package game
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
-	"math/rand"
-	"time"
 	"log"
+	"math/rand"
 	"os"
-	"bytes"
 	"sync"
+	"time"
 )
 
 const numCandidates int = 9
@@ -26,17 +26,17 @@ func init() {
 }
 
 type candidate struct {
-	value int
-	row int
+	value  int
+	row    int
 	column int
 }
 
 type candidateList []*candidate
 
-func (c candidate) clone() (*candidate) {
+func (c candidate) clone() *candidate {
 	var ret *candidate = &candidate{
-		value: c.value,
-		row: c.row,
+		value:  c.value,
+		row:    c.row,
 		column: c.column,
 	}
 
@@ -52,12 +52,11 @@ Sub Grids
 0|1|2
 3|4|5
 6|7|8
- */
+*/
 
 type Game struct {
-	Grid [numRows][numColumns] int
+	Grid [numRows][numColumns]int
 }
-
 
 func (gs *Game) String() string {
 	var buf bytes.Buffer
@@ -71,7 +70,7 @@ func (gs *Game) String() string {
 				buf.WriteString(fmt.Sprintf("%d", value))
 			}
 
-			if column != numColumns - 1 {
+			if column != numColumns-1 {
 				buf.WriteString("|")
 			}
 		}
@@ -81,12 +80,10 @@ func (gs *Game) String() string {
 	return buf.String()
 }
 
-func NewGame() (*Game) {
-	var game *Game = &Game{
+func NewGame() *Game {
+	var game *Game = &Game{}
 
-	}
-
-	for row := 0; row < numRows; row++{
+	for row := 0; row < numRows; row++ {
 		for column := 0; column < numColumns; column++ {
 			game.Grid[row][column] = NotSet
 		}
@@ -101,8 +98,8 @@ type GamePlayStatistics struct {
 }
 
 type gameState struct {
-	Grid [numRows][numColumns]int
-	moves candidateList
+	Grid               [numRows][numColumns]int
+	moves              candidateList
 	GamePlayStatistics *GamePlayStatistics
 }
 
@@ -112,10 +109,7 @@ func (gs *gameState) movesRemaining() int {
 }
 
 func (gs *gameState) clone() *gameState {
-	var ret *gameState = &gameState{
-
-	}
-
+	var ret *gameState = &gameState{}
 
 	for row := 0; row < numRows; row++ {
 		for column := 0; column < numColumns; column++ {
@@ -146,7 +140,7 @@ func (gs *gameState) String() string {
 				buf.WriteString(fmt.Sprintf("%d", value))
 			}
 
-			if column != numColumns - 1 {
+			if column != numColumns-1 {
 				buf.WriteString("|")
 			}
 		}
@@ -188,7 +182,7 @@ func (tree searchTree) back() candidateList {
 	if length == 0 {
 		return nil
 	} else {
-		return tree[length - 1]
+		return tree[length-1]
 	}
 }
 
@@ -197,25 +191,25 @@ func (tree searchTree) popBack() searchTree {
 	if length == 0 {
 		return nil
 	} else {
-		return tree[0:length - 1]
+		return tree[0 : length-1]
 	}
 }
 
-
 const subGridRows int = 3
 const subGridColumns int = 3
+
 /*
 Grid 0
 (0, 0), (0, 1), (0, 2)
 (1, 0), (1, 1), (1, 2)
 (2, 0), (2, 1), (2, 2)
- */
+*/
 /*
 Grid 1
 (0, 3), (0, 4), (0, 5)
 (1, 3), (1, 4), (1, 5)
 (2, 3), (2, 4), (2, 5)
- */
+*/
 /*
 Grid 2
 (0, 6), (0, 7), (0, 8)
@@ -227,44 +221,43 @@ Grid 3
 (3, 0), (3, 1), (3, 2)
 (4, 0), (4, 1), (4, 2)
 (5, 0), (5, 1), (5, 2)
- */
+*/
 /*
 Grid 4
 (3, 3), (3, 4), (3, 5)
 (4, 3), (4, 4), (4, 5)
 (5, 3), (5, 4), (5, 5)
- */
+*/
 /*
 Grid 5
 (3, 6), (3, 7), (3, 8)
 (4, 6), (4, 7), (4, 8)
 (5, 6), (5, 7), (5, 8)
- */
+*/
 
 /*
 Grid 6
 (6, 0), (6, 1), (6, 2)
 (7, 0), (7, 1), (7, 2)
 (8, 0), (8, 1), (8, 2)
- */
+*/
 /*
 Grid 7
 (6, 3), (6, 4), (6, 5)
 (7, 3), (7, 4), (7, 5)
 (8, 3), (8, 4), (8, 5)
- */
+*/
 /*
 Grid 8
 (6, 6), (6, 7), (6, 8)
 (7, 6), (7, 7), (7, 8)
 (8, 6), (8, 7), (8, 8)
- */
-
+*/
 
 /*
 Grid N
 (
- */
+*/
 
 func computeBaseRow(subSquare int) (int, error) {
 	if subSquare < 0 || subSquare > numSubSquares {
@@ -286,7 +279,6 @@ func computeBaseColumn(subSquare int) (int, error) {
 	return subSquare, nil
 }
 
-
 func validateSubGrid(gameState *gameState, subSquare int) (err error) {
 	var baseRow, baseColumn int
 	baseRow, err = computeBaseRow(subSquare)
@@ -297,7 +289,6 @@ func validateSubGrid(gameState *gameState, subSquare int) (err error) {
 	if err != nil {
 		return err
 	}
-
 
 	maxRow := baseRow + 3
 	maxColumn := baseColumn + 3
@@ -338,7 +329,6 @@ func validateSubGrid(gameState *gameState, subSquare int) (err error) {
 	} else {
 		return nil
 	}
-
 
 }
 
@@ -420,7 +410,6 @@ func validateColumn(gameState *gameState, column int) (err error) {
 
 }
 
-
 func validateGameState(gs *gameState) (err error) {
 	/*Validate Sub Grids*/
 
@@ -430,7 +419,6 @@ func validateGameState(gs *gameState) (err error) {
 			return err
 		}
 	}
-
 
 	/*Validate Rows*/
 	for n := 0; n < numRows; n++ {
@@ -472,7 +460,7 @@ func countSelected(gameState *gameState) (count int) {
 func createGame(game *Game) (*gameState, error) {
 	var err error
 	var gs *gameState = &gameState{
-		moves: make(candidateList, 0, 9 * 9),
+		moves: make(candidateList, 0, 9*9),
 		GamePlayStatistics: &GamePlayStatistics{
 			BackTracks: 0,
 		},
@@ -484,12 +472,10 @@ func createGame(game *Game) (*gameState, error) {
 		}
 	}
 
-
 	err = validateGameState(gs)
 	if err != nil {
 		return nil, err
 	}
-
 
 	return gs, nil
 }
@@ -502,15 +488,12 @@ func snapToGrid(n int) (int, int) {
 	return min, max
 }
 
-
-
-
 func (cl candidateList) back() *candidate {
 	var length int = len(cl)
 	if length == 0 {
 		return nil
 	} else {
-		return cl[length - 1]
+		return cl[length-1]
 	}
 }
 
@@ -519,18 +502,18 @@ func (cl candidateList) popBack() candidateList {
 	if length == 0 {
 		return nil
 	} else {
-		return cl[0:length - 1]
+		return cl[0 : length-1]
 	}
 }
 
 func createAllCandidatesList() candidateList {
-	var ret candidateList = make(candidateList, 0, 9 * 9 * 9)
+	var ret candidateList = make(candidateList, 0, 9*9*9)
 	for row := 0; row < numRows; row++ {
 		for column := 0; column < numColumns; column++ {
 			for value := 0; value < numCandidates; value++ {
 				var candidate *candidate = &candidate{
-					value: value,
-					row: row,
+					value:  value,
+					row:    row,
 					column: column,
 				}
 
@@ -541,9 +524,6 @@ func createAllCandidatesList() candidateList {
 
 	return ret
 }
-
-
-
 
 func createValidCandidateListAsync(gs *gameState, allCandidate candidateList, checkChild bool) candidateList {
 	var wait sync.WaitGroup
@@ -582,7 +562,7 @@ func createValidCandidateListAsync(gs *gameState, allCandidate candidateList, ch
 
 	for i := 0; i < len(allCandidate); i++ {
 		var c *candidate
-		c = <- candidateChannel
+		c = <-candidateChannel
 		if c != nil {
 			validCandidates = append(validCandidates, c)
 		}
@@ -634,7 +614,7 @@ func shuffleCandidates(candidates candidateList) {
 
 type searchSnapShot struct {
 	candidateCountHistogram []int
-	moves candidateList
+	moves                   candidateList
 }
 
 func createSearchSnapShot(gs *gameState, moves candidateList, tree searchTree) *searchSnapShot {
@@ -698,10 +678,7 @@ func printTreeHistograms(tree searchTree, after int) {
 		//log.Print(buf.String())
 	}
 
-
-
 }
-
 
 func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 	var gs *gameState
@@ -720,7 +697,7 @@ func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 	var snapShotModulo int = 10000
 	var checkChildren bool = false
 
-	for playing && (iteration < maxIterations){
+	for playing && (iteration < maxIterations) {
 		iteration++
 		if (iteration % snapShotModulo) == 0 {
 			log.Printf("iteration: %d", iteration)
@@ -747,9 +724,9 @@ func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 			moves = append(moves, candidate)
 			gs.addCandidate(candidate)
 			/*
-			log.Printf("game state set count: %d, len(moves): %d, len(tree): %d, len(tree.back()): %d",
-				gs.setCount(), len(moves), len(tree), len(tree.back()))
-				*/
+				log.Printf("game state set count: %d, len(moves): %d, len(tree): %d, len(tree.back()): %d",
+					gs.setCount(), len(moves), len(tree), len(tree.back()))
+			*/
 			//log.Printf("gs.setCount(): %d", gs.setCount())
 			go printTreeHistograms(tree, 60)
 			playing = !isFinished(gs)
@@ -767,4 +744,3 @@ func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 
 	return g, gs.GamePlayStatistics.Iterations, nil
 }
-

@@ -3,11 +3,10 @@ package game
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"fmt"
 	"bytes"
+	"fmt"
+	"github.com/stretchr/testify/assert"
 )
-
 
 func Test_creatAllCandidateList(t *testing.T) {
 	var allCandidateList candidateList = createAllCandidatesList()
@@ -26,9 +25,9 @@ func Test_shuffleCandidates(t *testing.T) {
 
 func Test_createValidCandidateList(t *testing.T) {
 	var c *candidate = &candidate{
-		row: 0,
+		row:    0,
 		column: 0,
-		value: 4,
+		value:  4,
 	}
 
 	var gs *gameState
@@ -40,7 +39,6 @@ func Test_createValidCandidateList(t *testing.T) {
 	allCandidates = candidateList{&candidate{}, &candidate{}, &candidate{}}
 	allCandidates[0].value = 0
 	allCandidates[1].value = 1
-
 
 	allCandidates[2].value = 0
 	allCandidates[2].row = 0
@@ -60,9 +58,9 @@ func Test_createValidCandidateList(t *testing.T) {
 
 func Test_gameState_setCandidate(t *testing.T) {
 	var c *candidate = &candidate{
-		row: 0,
+		row:    0,
 		column: 0,
-		value: 4,
+		value:  4,
 	}
 
 	var gs *gameState
@@ -76,15 +74,14 @@ func Test_gameState_setCandidate(t *testing.T) {
 	assert.True(t, gs.isSet(c.row, c.column))
 
 	c = &candidate{
-		row: 1,
+		row:    1,
 		column: 1,
-		value: 5,
+		value:  5,
 	}
 	gs.addCandidate(c)
 	assert.Equal(t, 5, gs.Grid[c.row][c.column])
 	assert.Equal(t, 2, gs.setCount())
 	assert.True(t, gs.isSet(c.row, c.column))
-
 
 	gs.removeCandidate(c)
 	assert.Equal(t, NotSet, gs.Grid[c.row][c.column])
@@ -167,7 +164,6 @@ func Test_computeBaseColumn(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expect, baseColumn)
 
-
 	expect = 3
 	baseColumn, err = computeBaseColumn(1)
 	assert.Nil(t, err)
@@ -194,9 +190,6 @@ func Test_computeBaseColumn(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expect, baseColumn)
 }
-
-
-
 
 func Test_validateSubGrid(t *testing.T) {
 	var gameState *gameState
@@ -238,7 +231,6 @@ func Test_validateSubGrid(t *testing.T) {
 	err = validateSubGrid(gameState, 345)
 	assert.NotNil(t, err)
 
-
 	gameState.Grid[0][0] = 8
 	err = validateSubGrid(gameState, 0)
 	assert.Nil(t, err)
@@ -251,15 +243,12 @@ func Test_validateSubGrid(t *testing.T) {
 	err = validateSubGrid(gameState, 0)
 	assert.NotNil(t, err)
 
-
 	err = validateSubGrid(gameState, 3)
 	assert.Nil(t, err)
-
 
 	resetGameState(gameState)
 	err = validateSubGrid(gameState, 0)
 	assert.Nil(t, err)
-
 
 	gameState.Grid[3][3] = 2
 	gameState.Grid[4][4] = 2
@@ -274,7 +263,6 @@ func Test_validateSubGrid(t *testing.T) {
 	resetGameState(gameState)
 	err = validateSubGrid(gameState, 0)
 	assert.Nil(t, err)
-
 
 	gameState.Grid[0][0] = 0
 	gameState.Grid[0][1] = 1
@@ -388,8 +376,8 @@ func Test_testValidateGameState(t *testing.T) {
 	assert.Nil(t, err)
 
 	/*
-	Should fail on Sub Grid Validation
-	 */
+		Should fail on Sub Grid Validation
+	*/
 	gameState.Grid[0][0] = 3
 	gameState.Grid[1][0] = 3
 	err = validateGameState(gameState)
@@ -413,7 +401,6 @@ func Test_testValidateGameState(t *testing.T) {
 
 func Test_validateRow(t *testing.T) {
 
-
 	var gameState *gameState
 	var err error
 
@@ -423,14 +410,13 @@ func Test_validateRow(t *testing.T) {
 	err = validateGameState(gameState)
 	assert.Nil(t, err)
 
-
 	err = validateRow(gameState, -234)
 	assert.NotNil(t, err)
 
 	err = validateRow(gameState, numRows)
 	assert.NotNil(t, err)
 
-	err = validateRow(gameState, numRows - 1)
+	err = validateRow(gameState, numRows-1)
 	assert.Nil(t, err)
 
 	row := 0
@@ -440,7 +426,7 @@ func Test_validateRow(t *testing.T) {
 	err = validateRow(gameState, row)
 	assert.NotNil(t, err)
 
-	err = validateRow(gameState, row + 1)
+	err = validateRow(gameState, row+1)
 	assert.Nil(t, err)
 
 	resetGameState(gameState)
@@ -460,14 +446,13 @@ func Test_validateColumn(t *testing.T) {
 	gs, err = createGame(NewGame())
 	assert.Nil(t, err)
 
-
 	err = validateColumn(gs, -234)
 	assert.NotNil(t, err)
 
 	err = validateColumn(gs, numColumns)
 	assert.NotNil(t, err)
 
-	err = validateColumn(gs, numColumns - 1)
+	err = validateColumn(gs, numColumns-1)
 	assert.Nil(t, err)
 
 	resetGameState(gs)
@@ -480,7 +465,7 @@ func Test_validateColumn(t *testing.T) {
 	err = validateColumn(gs, column)
 	assert.NotNil(t, err)
 
-	err = validateColumn(gs, column + 1)
+	err = validateColumn(gs, column+1)
 	assert.Nil(t, err)
 
 	resetGameState(gs)
@@ -507,8 +492,7 @@ func Test_countSelected(t *testing.T) {
 
 	count = countSelected(gs)
 	assert.Equal(t, expect, count)
-	assert.Equal(t, numRows * numColumns, gs.movesRemaining())
-
+	assert.Equal(t, numRows*numColumns, gs.movesRemaining())
 
 	gs.Grid[0][0] = 4
 	expect += 1
@@ -541,10 +525,10 @@ func Test_isFinished(t *testing.T) {
 	}
 
 	/*
-	Semantically this is not a valid terminal state for the game Sudoku, but the
-	isFinished function does not evaluate constraints.  That will be handled by the
-	function validategs
-	 */
+		Semantically this is not a valid terminal state for the game Sudoku, but the
+		isFinished function does not evaluate constraints.  That will be handled by the
+		function validategs
+	*/
 	actual = isFinished(gs)
 	assert.Equal(t, expect, actual)
 
@@ -600,11 +584,10 @@ func Test_minMax(t *testing.T) {
 
 }
 
-
 func printCandidateList(candidates candidateList, header, indent string) {
 	/*
-	The candidate list is intended to be very small in this helper function
-	 */
+		The candidate list is intended to be very small in this helper function
+	*/
 
 	var buf bytes.Buffer
 	fmt.Println(header)
@@ -619,7 +602,7 @@ func printTree(tree searchTree, header, indent string) {
 
 	fmt.Println(header)
 	for i, candidates := range tree {
-		printCandidateList(candidates, fmt.Sprintf("%stree node: %d", indent, i), indent + "\t")
+		printCandidateList(candidates, fmt.Sprintf("%stree node: %d", indent, i), indent+"\t")
 	}
 }
 
@@ -629,24 +612,23 @@ func Test_backTrack(t *testing.T) {
 	var moves candidateList
 	var tree searchTree
 
-
 	gs, err = createGame(NewGame())
 
 	moves = candidateList{
 		&candidate{
-			row: 0,
+			row:    0,
 			column: 0,
-			value: 0,
+			value:  0,
 		},
 		&candidate{
-			row: 0,
+			row:    0,
 			column: 2,
-			value:2,
+			value:  2,
 		},
 		&candidate{
-			row: 0,
+			row:    0,
 			column: 1,
-			value: 1,
+			value:  1,
 		},
 	}
 
@@ -759,41 +741,39 @@ func Test_backTrack(t *testing.T) {
 	assert.Equal(t, 0, len(moves))
 	assert.Equal(t, 0, len(tree))
 
-
 }
 
 func Test_backTrack2(t *testing.T) {
 	/*
-	Same setup as Test_backTrack
-	 */
+		Same setup as Test_backTrack
+	*/
 	var err error
 	var gs *gameState
 	var moves candidateList
 	var tree searchTree
 
-
 	gs, err = createGame(NewGame())
 
 	moves = candidateList{
 		&candidate{
-			row: 0,
+			row:    0,
 			column: 0,
-			value: 0,
+			value:  0,
 		},
 		&candidate{
-			row: 0,
+			row:    0,
 			column: 2,
-			value:2,
+			value:  2,
 		},
 		&candidate{
-			row: 0,
+			row:    0,
 			column: 1,
-			value: 1,
+			value:  1,
 		},
 		&candidate{
-			row: 0,
+			row:    0,
 			column: 3,
-			value: 4,
+			value:  4,
 		},
 	}
 
@@ -806,22 +786,16 @@ func Test_backTrack2(t *testing.T) {
 
 	tree = make(searchTree, 4)
 	/*
-	Here is where this test differs from Test_backTrack. I want to force a recursive backtrack
-	 */
+		Here is where this test differs from Test_backTrack. I want to force a recursive backtrack
+	*/
 	tree[0] = candidateList{
 		&candidate{3, 3, 0},
 		&candidate{3, 4, 1},
 		&candidate{3, 5, 2},
 	}
-	tree[1] = candidateList{
-
-	}
-	tree[2] = candidateList{
-
-	}
-	tree[3] = candidateList{
-
-	}
+	tree[1] = candidateList{}
+	tree[2] = candidateList{}
+	tree[3] = candidateList{}
 
 	fmt.Println("before backtrack")
 	printCandidateList(moves, "moves", "\t")
@@ -867,5 +841,17 @@ func Test_createValidCanidatesAsyn(t *testing.T) {
 
 	validCanidates = createValidCandidateListAsync(gs, allCandidates, true)
 	assert.True(t, len(validCanidates) < expect)
+}
 
+func Test_faff(t *testing.T) {
+	var x int
+	x = 56*3 + 3
+	assert.NotEqual(t, 0, x)
+}
+
+func BenchmarkPlayGame(b *testing.B) {
+
+	for i := 0; i < 10; i++ {
+		_, _, _ = PlayGame(NewGame(), DefaultMaxIterations)
+	}
 }
