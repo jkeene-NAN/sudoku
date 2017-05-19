@@ -13,7 +13,7 @@ func main() {
 	if err != nil {
 		log.Printf("error playing game: %v", err)
 	} else {
-		log.Printf("iterations: %d, gameState: %v", iterations, *gameState)
+		log.Printf("iterations: %d, gameState: %s", iterations, gameState.String())
 	}
 	log.Print("done")
 }

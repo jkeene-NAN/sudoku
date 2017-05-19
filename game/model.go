@@ -58,6 +58,29 @@ type Game struct {
 	Grid [numRows][numColumns] int
 }
 
+
+func (gs *Game) String() string {
+	var buf bytes.Buffer
+	buf.WriteString("\n")
+	for row := 0; row < numRows; row++ {
+		for column := 0; column < numColumns; column++ {
+			var value int = gs.Grid[row][column]
+			if value == NotSet {
+				buf.WriteString("-")
+			} else {
+				buf.WriteString(fmt.Sprintf("%d", value))
+			}
+
+			if column != numColumns - 1 {
+				buf.WriteString("|")
+			}
+		}
+		buf.WriteString("\n")
+	}
+
+	return buf.String()
+}
+
 func NewGame() (*Game) {
 	var game *Game = &Game{
 
@@ -109,6 +132,28 @@ func resetGameState(gs *gameState) {
 			gs.Grid[row][column] = NotSet
 		}
 	}
+}
+
+func (gs *gameState) String() string {
+	var buf bytes.Buffer
+	buf.WriteString("\n")
+	for row := 0; row < numRows; row++ {
+		for column := 0; column < numColumns; column++ {
+			var value int = gs.Grid[row][column]
+			if value == NotSet {
+				buf.WriteString("-")
+			} else {
+				buf.WriteString(fmt.Sprintf("%d", value))
+			}
+
+			if column != numColumns - 1 {
+				buf.WriteString("|")
+			}
+		}
+		buf.WriteString("\n")
+	}
+
+	return buf.String()
 }
 
 func (gs *gameState) addCandidate(candidate *candidate) {
@@ -635,25 +680,7 @@ func backTrack(gs *gameState, moves candidateList, tree searchTree) (*gameState,
 }
 
 func printGameState(gs *gameState) {
-	var buf bytes.Buffer
-	buf.WriteString("\n")
-	for row := 0; row < numRows; row++ {
-		for column := 0; column < numColumns; column++ {
-			var value int = gs.Grid[row][column]
-			if value == NotSet {
-				buf.WriteString("-")
-			} else {
-				buf.WriteString(fmt.Sprintf("%d", value))
-			}
-
-			if column != numColumns - 1 {
-				buf.WriteString("|")
-			}
-		}
-		buf.WriteString("\n")
-	}
-
-	log.Print(buf.String())
+	log.Print(gs.String())
 }
 
 func printTreeHistograms(tree searchTree, after int) {
