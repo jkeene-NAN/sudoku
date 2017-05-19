@@ -46,13 +46,13 @@ func Test_createValidCandidateList(t *testing.T) {
 	allCandidates[2].row = 0
 	allCandidates[2].column = 4
 
-	var potentialCandidates = createValidCandidateList(gs, allCandidates)
+	var potentialCandidates = createValidCandidateList(gs, allCandidates, false)
 
 	assert.Equal(t, len(allCandidates), len(potentialCandidates))
 	c = allCandidates[0]
 	gs.addCandidate(c)
 	assert.True(t, gs.isSet(c.row, c.column))
-	potentialCandidates = createValidCandidateList(gs, allCandidates)
+	potentialCandidates = createValidCandidateList(gs, allCandidates, false)
 	assert.NotEqual(t, len(allCandidates), len(potentialCandidates))
 	//assert.Equal(t, (len(allCandidates) - (9 + 8 + 6 + 6)), len(potentialCandidates))
 	assert.Equal(t, 0, len(potentialCandidates))
@@ -507,6 +507,7 @@ func Test_countSelected(t *testing.T) {
 
 	count = countSelected(gs)
 	assert.Equal(t, expect, count)
+	assert.Equal(t, numRows * numColumns, gs.movesRemaining())
 
 
 	gs.Grid[0][0] = 4
@@ -835,7 +836,7 @@ func Test_backTrack2(t *testing.T) {
 	printCandidateList(moves, "moves", "\t")
 	printTree(tree, "tree", "\t")
 
-	var candidates candidateList = createValidCandidateList(gs, createAllCandidatesList())
+	var candidates candidateList = createValidCandidateList(gs, createAllCandidatesList(), true)
 	c = candidates.back()
 	gs.addCandidate(c)
 	moves = append(moves, c)
@@ -844,5 +845,27 @@ func Test_backTrack2(t *testing.T) {
 	printCandidateList(moves, "moves", "\t")
 	//fmt.Printf("gs: %v\n", *gs)
 	//printTree(tree, "tree", "\t")
+
+}
+
+func Test_createValidCanidatesAsyn(t *testing.T) {
+
+	var err error
+	var gs *gameState
+	var allCandidates candidateList = createAllCandidatesList()
+	var validCanidates candidateList
+	var expect int = numRows * numColumns * numCandidates
+
+	gs, err = createGame(NewGame())
+	assert.Nil(t, err)
+
+	validCanidates = createValidCandidateListAsync(gs, allCandidates, true)
+	assert.Equal(t, expect, len(validCanidates))
+
+	var c *candidate = validCanidates.back()
+	gs.addCandidate(c)
+
+	validCanidates = createValidCandidateListAsync(gs, allCandidates, true)
+	assert.True(t, len(validCanidates) < expect)
 
 }

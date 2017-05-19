@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"bytes"
+	"sync"
 )
 
 const numCandidates int = 9
@@ -16,6 +17,7 @@ const numColumns int = 9
 const numSubSquares int = 9
 const NotSet = -1
 const DefaultMaxIterations = 1000000000
+const CheckChildrenDepthThreshold int = 50
 
 func init() {
 	rand.Seed(time.Now().Unix())
@@ -79,6 +81,26 @@ type gameState struct {
 	Grid [numRows][numColumns]int
 	moves candidateList
 	GamePlayStatistics *GamePlayStatistics
+}
+
+func (gs *gameState) movesRemaining() int {
+	var count = gs.setCount()
+	return (numRows * numColumns) - count
+}
+
+func (gs *gameState) clone() *gameState {
+	var ret *gameState = &gameState{
+
+	}
+
+
+	for row := 0; row < numRows; row++ {
+		for column := 0; column < numColumns; column++ {
+			ret.Grid[row][column] = gs.Grid[row][column]
+		}
+	}
+
+	return ret
 }
 
 func resetGameState(gs *gameState) {
@@ -475,7 +497,56 @@ func createAllCandidatesList() candidateList {
 	return ret
 }
 
-func createValidCandidateList(gs *gameState, allCandidates candidateList) candidateList {
+
+
+
+func createValidCandidateListAsync(gs *gameState, allCandidate candidateList, checkChild bool) candidateList {
+	var wait sync.WaitGroup
+	wait.Add(len(allCandidate))
+	var candidateChannel chan *candidate = make(chan *candidate, len(allCandidate))
+	var validCandidates candidateList = make(candidateList, 0)
+
+	var doCheck = func(clone *gameState, c *candidate) {
+		defer wait.Done()
+		var toAdd *candidate
+		clone.addCandidate(c)
+		var err error = validateGameState(clone)
+		if err == nil {
+			if checkChild {
+				var childValidCandidates candidateList = createValidCandidateList(clone, allCandidate, false)
+				if len(childValidCandidates) >= clone.movesRemaining() {
+					toAdd = c
+				} else {
+					toAdd = nil
+				}
+			} else {
+				toAdd = c
+			}
+		} else {
+			toAdd = nil
+		}
+
+		candidateChannel <- toAdd
+	}
+
+	for _, candidate := range allCandidate {
+		go doCheck(gs.clone(), candidate)
+	}
+
+	wait.Wait()
+
+	for i := 0; i < len(allCandidate); i++ {
+		var c *candidate
+		c = <- candidateChannel
+		if c != nil {
+			validCandidates = append(validCandidates, c)
+		}
+	}
+
+	return validCandidates
+}
+
+func createValidCandidateList(gs *gameState, allCandidates candidateList, checkChild bool) candidateList {
 	var ret candidateList = make(candidateList, 0, len(allCandidates))
 	var err error
 	for _, c := range allCandidates {
@@ -483,12 +554,19 @@ func createValidCandidateList(gs *gameState, allCandidates candidateList) candid
 			gs.addCandidate(c)
 			err = validateGameState(gs)
 			if err == nil {
-				ret = append(ret, c)
+				if checkChild {
+					var childCandidates candidateList = createValidCandidateList(gs, allCandidates, false)
+					if len(childCandidates) >= gs.movesRemaining() {
+						ret = append(ret, c)
+					}
+				} else {
+					ret = append(ret, c)
+				}
 			} else {
 				//log.Printf("%s", err)
 			}
-
 			gs.removeCandidate(c)
+
 		} else {
 			//log.Printf("skipping candidate for being already set: %v", *c)
 		}
@@ -536,7 +614,7 @@ func backTrack(gs *gameState, moves candidateList, tree searchTree) (*gameState,
 		return nil, nil, nil, errors.New("tree is empty on call to back track")
 	}
 
-	log.Print("backtracking...")
+	//log.Print("backtracking...")
 	var c *candidate = moves.back()
 	moves = moves.popBack()
 	gs.removeCandidate(c)
@@ -590,12 +668,13 @@ func printTreeHistograms(tree searchTree, after int) {
 			buf.WriteString(fmt.Sprintf("%d:%d, ", i, candidatesLen))
 		}
 
-		log.Print(buf.String())
+		//log.Print(buf.String())
 	}
 
 
 
 }
+
 
 func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 	var gs *gameState
@@ -611,21 +690,28 @@ func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 	var moves candidateList = make(candidateList, 0, 81)
 	var playing bool = !isFinished(gs)
 	var iteration int = 0
-	var snapShotModulo int = 1000
+	var snapShotModulo int = 10000
+	var checkChildren bool = false
 
 	for playing && (iteration < maxIterations){
 		iteration++
 		if (iteration % snapShotModulo) == 0 {
 			log.Printf("iteration: %d", iteration)
 		}
-		var candidates candidateList = createValidCandidateList(gs, allCandidates)
+		if len(moves) >= CheckChildrenDepthThreshold {
+			checkChildren = true
+		} else {
+			checkChildren = false
+		}
+
+		var candidates candidateList = createValidCandidateListAsync(gs, allCandidates, checkChildren)
 		shuffleCandidates(candidates)
 		if len(candidates) == 0 {
 			gs, moves, tree, err = backTrack(gs, moves, tree)
 			if err != nil {
 				return nil, iteration, err
 			} else {
-				//printTreeHistograms(tree, 60)
+				printTreeHistograms(tree, 60)
 			}
 		} else {
 			var candidate *candidate = candidates.back()
@@ -638,7 +724,7 @@ func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 				gs.setCount(), len(moves), len(tree), len(tree.back()))
 				*/
 			//log.Printf("gs.setCount(): %d", gs.setCount())
-			printTreeHistograms(tree, 60)
+			go printTreeHistograms(tree, 60)
 			playing = !isFinished(gs)
 		}
 	}
