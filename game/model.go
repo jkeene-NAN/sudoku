@@ -55,15 +55,15 @@ Sub Grids
 */
 
 type Game struct {
-	Grid [numRows][numColumns]int
+	Grid [][]int
 }
 
-func (gs *Game) String() string {
+func gridToString(grid [][]int) string {
 	var buf bytes.Buffer
 	buf.WriteString("\n")
 	for row := 0; row < numRows; row++ {
 		for column := 0; column < numColumns; column++ {
-			var value int = gs.Grid[row][column]
+			var value int = grid[row][column]
 			if value == NotSet {
 				buf.WriteString("-")
 			} else {
@@ -80,10 +80,17 @@ func (gs *Game) String() string {
 	return buf.String()
 }
 
+func (gs *Game) String() string {
+	return gridToString(gs.Grid)
+}
+
 func NewGame() *Game {
-	var game *Game = &Game{}
+	var game *Game = &Game{
+		Grid: make([][]int, numRows),
+	}
 
 	for row := 0; row < numRows; row++ {
+		game.Grid[row] = make([]int, numRows)
 		for column := 0; column < numColumns; column++ {
 			game.Grid[row][column] = NotSet
 		}
@@ -98,9 +105,18 @@ type GamePlayStatistics struct {
 }
 
 type gameState struct {
-	Grid               [numRows][numColumns]int
+	Grid               [][]int
+	initialGameState *Game
 	moves              candidateList
 	GamePlayStatistics *GamePlayStatistics
+}
+
+func (gs *gameState) isMutable(can *candidate) bool {
+	var row, column int
+
+	row = can.row
+	column = can.column
+	return gs.initialGameState.Grid[row][column] == NotSet
 }
 
 func (gs *gameState) movesRemaining() int {
@@ -109,9 +125,14 @@ func (gs *gameState) movesRemaining() int {
 }
 
 func (gs *gameState) clone() *gameState {
-	var ret *gameState = &gameState{}
+	var ret *gameState = &gameState{
+		Grid: make([][]int, numRows),
+		initialGameState: gs.initialGameState,
+	}
+
 
 	for row := 0; row < numRows; row++ {
+		ret.Grid[row] = make([]int, numColumns)
 		for column := 0; column < numColumns; column++ {
 			ret.Grid[row][column] = gs.Grid[row][column]
 		}
@@ -129,25 +150,7 @@ func resetGameState(gs *gameState) {
 }
 
 func (gs *gameState) String() string {
-	var buf bytes.Buffer
-	buf.WriteString("\n")
-	for row := 0; row < numRows; row++ {
-		for column := 0; column < numColumns; column++ {
-			var value int = gs.Grid[row][column]
-			if value == NotSet {
-				buf.WriteString("-")
-			} else {
-				buf.WriteString(fmt.Sprintf("%d", value))
-			}
-
-			if column != numColumns-1 {
-				buf.WriteString("|")
-			}
-		}
-		buf.WriteString("\n")
-	}
-
-	return buf.String()
+	return gridToString(gs.Grid)
 }
 
 func (gs *gameState) addCandidate(candidate *candidate) {
@@ -460,13 +463,16 @@ func countSelected(gameState *gameState) (count int) {
 func createGame(game *Game) (*gameState, error) {
 	var err error
 	var gs *gameState = &gameState{
+		Grid: make([][]int, numRows),
 		moves: make(candidateList, 0, 9*9),
 		GamePlayStatistics: &GamePlayStatistics{
 			BackTracks: 0,
 		},
+		initialGameState: game,
 	}
 
 	for row := 0; row < numRows; row++ {
+		gs.Grid[row] = make([]int, numColumns)
 		for column := 0; column < numColumns; column++ {
 			gs.Grid[row][column] = game.Grid[row][column]
 		}
@@ -675,7 +681,7 @@ func printTreeHistograms(tree searchTree, after int) {
 			buf.WriteString(fmt.Sprintf("%d:%d, ", i, candidatesLen))
 		}
 
-		//log.Print(buf.String())
+		log.Print(buf.String())
 	}
 
 }
@@ -723,12 +729,6 @@ func PlayGame(initialGameState *Game, maxIterations int) (*Game, int, error) {
 			tree = append(tree, candidates)
 			moves = append(moves, candidate)
 			gs.addCandidate(candidate)
-			/*
-				log.Printf("game state set count: %d, len(moves): %d, len(tree): %d, len(tree.back()): %d",
-					gs.setCount(), len(moves), len(tree), len(tree.back()))
-			*/
-			//log.Printf("gs.setCount(): %d", gs.setCount())
-			go printTreeHistograms(tree, 60)
 			playing = !isFinished(gs)
 		}
 	}

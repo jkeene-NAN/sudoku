@@ -56,6 +56,32 @@ func Test_createValidCandidateList(t *testing.T) {
 	assert.Equal(t, 0, len(potentialCandidates))
 }
 
+func Test_gameState_isMutable(t *testing.T) {
+	var initialGameState *Game
+	var gs *gameState
+	var err error
+	var c *candidate
+	var result bool
+	var expect bool = false
+
+
+	initialGameState = NewGame()
+	c = &candidate{
+		row: 0,
+		column: 3,
+		value: 5,
+	}
+
+	initialGameState.Grid[c.row][c.column] = c.value
+
+	gs, err = createGame(initialGameState)
+	assert.Nil(t, err)
+
+	result = gs.isMutable(c)
+
+	assert.Equal(t, expect, result)
+}
+
 func Test_gameState_setCandidate(t *testing.T) {
 	var c *candidate = &candidate{
 		row:    0,
@@ -841,12 +867,6 @@ func Test_createValidCanidatesAsyn(t *testing.T) {
 
 	validCanidates = createValidCandidateListAsync(gs, allCandidates, true)
 	assert.True(t, len(validCanidates) < expect)
-}
-
-func Test_faff(t *testing.T) {
-	var x int
-	x = 56*3 + 3
-	assert.NotEqual(t, 0, x)
 }
 
 func BenchmarkPlayGame(b *testing.B) {
