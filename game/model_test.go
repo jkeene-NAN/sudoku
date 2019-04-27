@@ -875,3 +875,14 @@ func BenchmarkPlayGame(b *testing.B) {
 		_, _, _ = PlayGame(NewGame(), DefaultMaxIterations)
 	}
 }
+
+
+func Test_Json(t *testing.T) {
+	 	gs, _ := createGame(NewGame())
+		gs.Grid[0][0] = 4
+		gs.Grid[0][1] = 5
+		gs.Grid[0][2] = 6
+
+		jsonString := gs.Json()
+		t.Log(jsonString)
+}

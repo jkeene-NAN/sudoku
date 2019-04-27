@@ -9,6 +9,8 @@ import (
 	"os"
 	"sync"
 	"time"
+	"encoding/json"
+
 )
 
 const numCandidates int = 9
@@ -151,6 +153,11 @@ func resetGameState(gs *gameState) {
 
 func (gs *gameState) String() string {
 	return gridToString(gs.Grid)
+}
+
+func (gs *gameState) Json() string {
+	jsonBytes, _ := json.MarshalIndent(gs, "", "\t")
+	return string(jsonBytes)
 }
 
 func (gs *gameState) addCandidate(candidate *candidate) {
@@ -433,7 +440,7 @@ func validateGameState(gs *gameState) (err error) {
 
 	/*Validate Columns*/
 	for n := 0; n < numColumns; n++ {
-		err = validateRow(gs, n)
+		err = validateColumn(gs, n)
 		if err != nil {
 			return err
 		}
